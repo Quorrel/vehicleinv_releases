@@ -23,6 +23,14 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 - Export the full vehicle pack (`.vehiclepack.json`) via the system save dialog (SAF) on Android or the native share sheet on iOS
 - Config change history log
 
+### Device list comparison & import
+- Upload a document or image (PDF, JPG, PNG) containing a list of devices, or capture a photo directly with the device camera
+- Extracted device names and sections are compared against the vehicle's existing configuration using an AI Vision / OCR service
+- Diff viewer clearly separates devices only in the uploaded list vs. devices only in the existing config
+- Select individual or multiple devices with checkboxes; bulk-assign them to any section or subsection
+- Devices whose section cannot be determined are flagged with a dropdown for manual section assignment
+- Tap **Add Selected** to append the chosen devices directly into the vehicle's live configuration
+
 ### AI pack generator
 - Photograph vehicle sections; the AI (OpenRouter vision model) identifies all equipment and generates a complete device list
 - Each detected device automatically gets a thumbnail cropped from the section photo and set as its icon
@@ -183,6 +191,15 @@ lib/
 ---
 
 ## Release notes
+
+### v1.1.5 — Device list comparison & import
+- **File upload**: accept documents and images (PDF, JPG, PNG) from the file picker as the source for a device list
+- **Camera capture**: take a photo directly from the comparison screen — same camera integration used by the AI pack generator
+- **AI extraction**: uploaded file or photo is sent to an AI Vision / OCR service; the response is parsed into a structured list of device names grouped by section
+- **Diff viewer**: side-by-side comparison showing devices only in the uploaded list ("to add") vs. devices only in the existing vehicle configuration ("not found in upload")
+- **Multi-select & bulk assign**: checkbox selection on each diff entry; a single section dropdown applies to all selected items at once
+- **Unknown section handling**: devices whose section cannot be determined by the AI are flagged in the UI with a manual section selector
+- **One-tap import**: tap **Add Selected** to write the chosen devices directly into the vehicle's live configuration (section and device records created immediately)
 
 ### v1.1.3 — Build fixes & code quality
 - Fixed Android release build failing with "3 issues found when checking AAR metadata": `image_picker` transitively pulls in `androidx.activity:activity-ktx:1.12.4` and `androidx.navigationevent:navigationevent-android:1.0.2`, both of which embed metadata requiring AGP 8.9.1+; resolved by pinning `androidx.activity` to 1.9.3 and excluding `navigationevent-android` via `resolutionStrategy` in `app/build.gradle.kts`
