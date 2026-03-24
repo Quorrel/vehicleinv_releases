@@ -20,7 +20,7 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 - Add, edit, and delete sections, subsections, and devices
 - Devices support target quantity and fuel-level tracking
 - Import a full section/device tree from a JSON or CSV file
-- Export the full vehicle pack (`.vehiclepack.json`) via the native share sheet or a SAF save dialog
+- Export the full vehicle pack (`.vehiclepack.json`) via the system save dialog (SAF) on Android or the native share sheet on iOS
 - Config change history log
 
 ### AI pack generator
@@ -180,6 +180,13 @@ lib/
 ---
 
 ## Release notes
+
+### v1.1.1 — Vehicle pack save fix & CI signing fix
+- Fixed vehicle pack (and JSON/CSV config exports) not appearing in the Downloads folder after saving via a file manager
+- Root cause: the share sheet fires `ACTION_SEND` (open/consume intent); when a file manager was picked from the share sheet it opened the file instead of saving it, so `ShareResultStatus` returned `success` and the SAF fallback never triggered
+- Android export now goes directly to the Storage Access Framework save dialog (`ACTION_CREATE_DOCUMENT`) — the user picks the destination folder once and the file is guaranteed to be written there
+- No additional permissions required; SAF is system-mediated and works on all Android versions without `WRITE_EXTERNAL_STORAGE`
+- Fixed GitHub Actions release build failing with "Keystore file not found" — the keystore was decoded to `android/release.jks` but Gradle resolves relative paths from the app module directory (`android/app/`); decode step now writes to `android/app/release.jks`
 
 ### v1.0.9 — Inventory thumbnail viewer
 - Device thumbnails are now displayed on every inventory card (48 px square, left of the device name)
