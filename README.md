@@ -178,6 +178,9 @@ lib/
 
 ## Release notes
 
+### v1.0.6 — Version code fix
+- Corrected the Android `versionCode` to ensure the auto-update mechanism and Play-compatible distribution recognise this as a newer build
+
 ### v1.0.5 — Auto-update installation fix
 - Fixed APK installation failing after granting the "Install unknown apps" permission on Android 8.0+
 - Download and install are now separate steps: the download runs first, then a persistent **INSTALL** button appears
