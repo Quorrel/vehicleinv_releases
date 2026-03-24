@@ -20,6 +20,7 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 - Add, edit, and delete sections, subsections, and devices
 - Devices support target quantity and fuel-level tracking
 - Import a full section/device tree from a JSON or CSV file
+- Export the full vehicle pack (`.vehiclepack.json`) via the native share sheet or a SAF save dialog
 - Config change history log
 
 ### AI pack generator
@@ -177,6 +178,12 @@ lib/
 ---
 
 ## Release notes
+
+### v1.0.7 — Vehicle pack download fix
+- Fixed exported `.vehiclepack.json` files not appearing in the Downloads app on Android 10+
+- Root cause: the previous fallback used `getExternalStorageDirectory()` which writes to the app-private directory (`Android/data/…`), hidden from the system Files app under Android scoped storage
+- Fallback now uses the Storage Access Framework (`ACTION_CREATE_DOCUMENT`) via a native save dialog — the user picks the destination (e.g. Downloads) and the file is immediately visible there
+- Share sheet remains the primary export method; the SAF save dialog only appears if the share sheet is dismissed
 
 ### v1.0.6 — Version code fix
 - Corrected the Android `versionCode` to ensure the auto-update mechanism and Play-compatible distribution recognise this as a newer build
