@@ -28,6 +28,8 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 - Each detected device automatically gets a thumbnail cropped from the section photo and set as its icon
 - Thumbnails uploaded to Supabase Storage (cloud mode) or saved locally to the device (offline mode)
 - Preview the full detected device list before applying it to a vehicle
+- Per section: choose **New section** (creates a new top-level section) or **Add to existing** (insert AI-detected devices into any existing section or subsection)
+- Photos can be taken directly with the **camera** or selected from the gallery — both options available side by side
 
 ### Inventory tracking
 - Swipe right → **Present**, swipe left → **Missing** (haptic feedback, instant local update)
@@ -38,6 +40,7 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 - Complete button locks the report and saves it
 - Device thumbnail shown on each card (48 px, supports cloud URLs and offline local files)
 - Tap thumbnail → full-screen image viewer with pinch-to-zoom (up to 6×)
+- Card background colour indicates status at a glance: green (present), red (missing), yellow (present but fuel below 100 %)
 
 ### Reports
 - Chronological list of past reports per vehicle (resume in-progress ones)
@@ -180,6 +183,20 @@ lib/
 ---
 
 ## Release notes
+
+### v1.1.3 — Build fixes & code quality
+- Fixed Android release build failing with "3 issues found when checking AAR metadata": `image_picker` transitively pulls in `androidx.activity:activity-ktx:1.12.4` and `androidx.navigationevent:navigationevent-android:1.0.2`, both of which embed metadata requiring AGP 8.9.1+; resolved by pinning `androidx.activity` to 1.9.3 and excluding `navigationevent-android` via `resolutionStrategy` in `app/build.gradle.kts`
+- Resolved all Flutter static analysis warnings: added missing `@override` annotations across all repository implementations (`DeviceRepository`, `SectionRepository`, `VehicleRepository`, `ReportRepository`, `EntryRepository`, `ConfigChangeRepository`)
+- Removed unused `dart:io` import in `vehicle_pack_service.dart`
+- Replaced deprecated `Switch.activeColor` with `activeThumbColor` in vehicle config screen
+- Added `const` to a `TextStyle` constructor to improve widget rebuild performance
+
+### v1.1.2 — AI generator improvements & inventory colour coding
+- **Inventory card colours**: device cards now show a background tint based on their confirmation state — green (present), red (missing), yellow (present but fuel level below 100 %). Unconfirmed cards remain the default dark surface colour
+- **AI section target**: each section entry in the AI generator now has a **NEW SECTION / ADD TO EXISTING** toggle. When "Add to existing" is selected a dropdown lists all sections and subsections of the vehicle; AI-detected devices are inserted directly into the chosen section without creating a new one
+- **Camera capture**: section photos in the AI generator can now be taken directly with the device camera via a dedicated **CAMERA** button, in addition to the existing gallery picker
+- **AI thumbnail quality**: updated AI prompt to request bounding boxes with 10–15 % padding on each side so the full device is always visible; crop code adds an additional 8 % safety margin at extraction time
+- **Thumbnail viewer**: device thumbnails in the inventory count are now shown at 48 px and support both Supabase Storage URLs and local file paths (offline mode); tapping a thumbnail opens a full-screen pinch-to-zoom viewer
 
 ### v1.1.1 — Vehicle pack save fix & CI signing fix
 - Fixed vehicle pack (and JSON/CSV config exports) not appearing in the Downloads folder after saving via a file manager
