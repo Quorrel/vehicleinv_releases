@@ -23,9 +23,10 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 - Config change history log
 
 ### AI pack generator
-- Describe sections in natural language; the app generates a complete device list via OpenRouter (any vision-capable model)
-- Attach a photo of the vehicle for context
-- Preview and apply the generated config directly to a vehicle
+- Photograph vehicle sections; the AI (OpenRouter vision model) identifies all equipment and generates a complete device list
+- Each detected device automatically gets a thumbnail cropped from the section photo and set as its icon
+- Thumbnails uploaded to Supabase Storage (cloud mode) or saved locally to the device (offline mode)
+- Preview the full detected device list before applying it to a vehicle
 
 ### Inventory tracking
 - Swipe right → **Present**, swipe left → **Missing** (haptic feedback, instant local update)
@@ -42,8 +43,9 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 
 ### Auto-update (Android)
 - On startup the app silently checks the GitHub releases API for a newer APK
-- Shows a "New Version Available" dialog with release notes when an update is found
-- Downloads the APK in-app with a progress bar, then hands off to the native Android installer
+- Shows a "New Version Available" dialog with release notes and a download progress bar
+- After the download completes a persistent **INSTALL** button appears — tap it to launch the native package installer
+- If Android redirects to the "Install unknown apps" permission screen, grant the permission and tap **INSTALL** again to complete the installation
 
 ### Settings
 - **App mode**: Administration (full CRUD) or Inventory Tracking (read-only, no edits)
@@ -175,6 +177,20 @@ lib/
 ---
 
 ## Release notes
+
+### v1.0.5 — Auto-update installation fix
+- Fixed APK installation failing after granting the "Install unknown apps" permission on Android 8.0+
+- Download and install are now separate steps: the download runs first, then a persistent **INSTALL** button appears
+- Tapping **INSTALL** can be repeated — if Android redirects to the permission settings screen, grant the permission and tap again to complete the install
+- An info banner in the dialog explains the two-step flow to the user
+
+### v1.0.4 — AI device thumbnails
+- The AI pack generator now automatically extracts a thumbnail for each detected device
+- The AI returns a normalized bounding box indicating where each device appears in the section photo; the app crops that region, resizes it to 256 px, and stores it as the device icon
+- Supabase backend: thumbnails are uploaded to Supabase Storage alongside manually uploaded icons
+- Local (offline) backend: thumbnails are saved to the device's documents directory
+- Thumbnail extraction is best-effort — individual failures are silently skipped without blocking the import
+- Success message shows how many thumbnails were extracted alongside the section count
 
 ### v1.0.3 — In-app auto-update
 - App now checks the GitHub releases API on every startup
