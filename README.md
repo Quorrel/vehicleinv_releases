@@ -1,12 +1,69 @@
 # Vehicle Inventory Management App
 
-Cross-platform Flutter app (Android / iOS / Windows) for field technicians to track equipment inside vehicles. Built with Supabase, Riverpod, and GoRouter.
+Cross-platform Flutter app (Android / iOS / Windows) for field technicians to track equipment inside vehicles. Built with Supabase or a local SQLite database, Riverpod state management, and GoRouter navigation.
+
+---
+
+## Features
+
+### Fleet management
+- Vehicle list with custom per-vehicle icons (tap the icon to upload)
+- Long-press a vehicle to delete it (with confirmation)
+- Global device search across the entire fleet
+
+### Vehicle dashboard
+- Device count and report count stats
+- Quick actions: start a new inventory count, view past reports, manage configuration
+- Last 5 reports with status badges — tap to open or resume
+
+### Vehicle configuration
+- Add, edit, and delete sections, subsections, and devices
+- Devices support target quantity and fuel-level tracking
+- Import a full section/device tree from a JSON or CSV file
+- Config change history log
+
+### AI pack generator
+- Describe sections in natural language; the app generates a complete device list via OpenRouter (any vision-capable model)
+- Attach a photo of the vehicle for context
+- Preview and apply the generated config directly to a vehicle
+
+### Inventory tracking
+- Swipe right → **Present**, swipe left → **Missing** (haptic feedback, instant local update)
+- Quantity counter for multi-unit devices
+- Fuel-level slider (green / amber / red thresholds)
+- Filter toggle: All items vs. Unconfirmed only
+- Live progress header: present / missing / remaining counts + percentage bar
+- Complete button locks the report and saves it
+
+### Reports
+- Chronological list of past reports per vehicle (resume in-progress ones)
+- Detail view: stat cards + collapsible discrepancy sections (missing items, low fuel, quantity shortages)
+- Export as **JSON**, **PDF**, or share via the system share sheet
+
+### Auto-update (Android)
+- On startup the app silently checks the GitHub releases API for a newer APK
+- Shows a "New Version Available" dialog with release notes when an update is found
+- Downloads the APK in-app with a progress bar, then hands off to the native Android installer
+
+### Settings
+- **App mode**: Administration (full CRUD) or Inventory Tracking (read-only, no edits)
+- **Database backend**: Local SQLite (offline, no account needed) or Supabase (cloud sync)
+- **Supabase credentials**: Saved to device, swapped at runtime without restarting
+- **Language**: English, French, German, Spanish, or system default
+- **Appearance**: Custom background image (dimmed behind the UI)
+- **AI service**: None, or OpenRouter with a configurable model
 
 ---
 
 ## Setup
 
-### 1. Supabase
+### Option A — Local database (no account needed)
+
+1. Open the app and go to **Settings**
+2. Set **Database** to **Local**
+3. Start adding vehicles immediately
+
+### Option B — Supabase (cloud sync)
 
 1. Create a project at [supabase.com](https://supabase.com)
 2. Run the migration in the SQL Editor:
@@ -14,10 +71,7 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
    supabase/migrations/001_create_tables.sql
    ```
 3. Copy your **Project URL** and **anon key** from Settings → API
-
-### 2. Configure credentials
-
-Pass credentials via `--dart-define` at build/run time (never hard-code them):
+4. Enter them in the app's Settings screen, or pass them at build time:
 
 ```bash
 flutter run \
@@ -25,8 +79,7 @@ flutter run \
   --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY
 ```
 
-Or create a `launch.json` in VS Code:
-
+VS Code `launch.json`:
 ```json
 {
   "configurations": [
@@ -43,16 +96,46 @@ Or create a `launch.json` in VS Code:
 }
 ```
 
-### 3. Install dependencies
+### Install dependencies & run
 
 ```bash
 flutter pub get
+flutter run
 ```
 
-### 4. Run
+---
 
-```bash
-flutter run
+## Importing a vehicle configuration
+
+From the **Add Vehicle** dialog or the **Config** screen, tap **Import config** and select a JSON or CSV file.
+
+**JSON format** (`assets/sample_vehicle_config.json`):
+```json
+{
+  "sections": [
+    {
+      "name": "Engine Compartment",
+      "devices": [
+        { "name": "Battery", "target_quantity": 1, "has_fuel": false }
+      ],
+      "subsections": [
+        {
+          "name": "Fluid Systems",
+          "devices": [
+            { "name": "Engine Oil", "target_quantity": 1, "has_fuel": true }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**CSV format** (`assets/sample_vehicle_config.csv`):
+```
+section,subsection,device_name,target_quantity,has_fuel
+Engine Compartment,,Battery,1,false
+Engine Compartment,Fluid Systems,Engine Oil,1,true
 ```
 
 ---
@@ -68,52 +151,78 @@ lib/
 │   ├── extensions/              # BuildContext, DateTime, String helpers
 │   ├── routing/                 # GoRouter config + route name constants
 │   ├── widgets/                 # Generic shared UI components
-│   └── services/                # Supabase singleton + file import parser
+│   └── services/                # Supabase, local DB, file import, AI, update
 ├── data/                        # Global data layer
 │   ├── models/                  # Immutable Dart data classes
-│   └── repositories/            # Supabase CRUD (one per entity)
+│   └── repositories/            # CRUD abstraction (one per entity)
 └── features/                    # Self-contained feature modules
-    ├── vehicles/                 # Vehicle selection + dashboard
+    ├── vehicles/                 # Fleet list, dashboard, config, AI generator
     ├── inventory/                # Live inventory tracking screen
-    ├── reports/                  # Report list + detail + export
-    └── settings/                 # Placeholder settings screen
+    ├── reports/                  # Report list, detail, and export
+    └── settings/                 # App settings screen
 ```
 
-## Importing a vehicle configuration
-
-From the "Add Vehicle" dialog, tap **Import config** and select a JSON or CSV file.
-
-**JSON format** (`assets/sample_vehicle_config.json`):
-```json
-{
-  "sections": [
-    {
-      "name": "Section Name",
-      "devices": [{ "name": "Device", "target_quantity": 1, "has_fuel": false }],
-      "subsections": [...]
-    }
-  ]
-}
-```
-
-**CSV format** (`assets/sample_vehicle_config.csv`):
-```
-section,subsection,device_name,target_quantity,has_fuel
-Engine Compartment,,Battery,1,false
-Engine Compartment,Fluid Systems,Engine Oil,1,true
-```
+---
 
 ## Extending the app
 
-- **New feature**: Add `features/<name>/` with screens, widgets, providers. Register one route in `core/routing/app_router.dart`.
+- **New feature**: Create `features/<name>/` with screens, widgets, and providers. Register one route in `core/routing/app_router.dart`.
+- **New repository**: Extend `base_repository.dart` — no other files need to change.
 - **New export format**: Add alongside `_exportJson` / `_exportPdf` in `report_detail_screen.dart`.
 - **Authentication**: Add `core/services/auth_service.dart` + a redirect guard in `app_router.dart`.
 - **Barcode scanning**: New `features/barcode_scanner/` module; no existing files need modification.
 
+---
+
+## Release notes
+
+### v1.0.3 — In-app auto-update
+- App now checks the GitHub releases API on every startup
+- Shows a "New Version Available" dialog with version number and release notes when a newer APK is found
+- Downloads the APK in-app with a real-time progress bar and cancel support
+- Hands off to the native Android package installer once the download is complete
+- Android `FileProvider` and `REQUEST_INSTALL_PACKAGES` permission wired up correctly for Android 7.0+
+
+### v1.0.2 — Stability release
+- Packaging and version bump fixes following v1.0.1
+
+### v1.0.1 — First release
+- Full inventory tracking: swipe right (present) / left (missing), quantity counter for multi-unit devices, fuel-level slider with green/amber/red thresholds
+- Supabase cloud backend with real-time sync across all screens
+- Local SQLite database — fully offline, no account required
+- Vehicle, section, and device photo attachments
+- Vehicle configuration import from JSON or CSV files; config export for sharing
+- Supabase schema auto-migration on app update
+- Report export as PDF or JSON; system share sheet integration
+- AI pack generator via OpenRouter — describe sections in plain text (or attach a photo) to generate a full device list
+- Application mode: Administration (full CRUD) or Inventory Tracking (read-only, locked UI)
+- AI provider selection: None or OpenRouter with configurable model
+- Language support: English, French, German, Spanish, system default
+- Global device search across the entire fleet
+- Background image customization
+- Inventory count can only be completed at 100% — partial completion is blocked
+- Connection error handling with retry and settings shortcut
+- De-duplicate search results fix
+- Download function hotfix
+
+---
+
+## Building a release APK
+
+```bash
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
+
+Upload the APK as a GitHub release asset tagged `vX.Y.Z` — the auto-update service will find it automatically.
+
+---
+
 ## Production checklist
 
 - [ ] Replace RLS dev policies in `001_create_tables.sql` with user-scoped policies
-- [ ] Configure Supabase Auth (email/magic link or SSO)
+- [ ] Configure Supabase Auth (email / magic link or SSO)
 - [ ] Set up Supabase Storage for cloud report uploads (`uploadReportToCloud`)
+- [ ] Add a release keystore and configure `signingConfig` in `android/app/build.gradle.kts`
 - [ ] Add CI/CD with `flutter build` for Android APK, iOS IPA, and Windows EXE
 - [ ] Enable error monitoring (e.g., Sentry)
