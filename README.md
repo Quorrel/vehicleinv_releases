@@ -36,7 +36,7 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 - Each detected device automatically gets a thumbnail cropped from the section photo and set as its icon
 - Thumbnails uploaded to Supabase Storage (cloud mode) or saved locally to the device (offline mode)
 - Preview the full detected device list before applying it to a vehicle
-- Per section: choose **New section** (creates a new top-level section) or **Add to existing** (insert AI-detected devices into any existing section or subsection)
+- Per section: choose **New section** (creates a new top-level section), **New subsection** (creates a subsection under any existing section or subsection), or **Add to existing** (insert AI-detected devices into any existing section or subsection)
 - Photos can be taken directly with the **camera** or selected from the gallery — both options available side by side
 
 ### Inventory tracking
@@ -166,15 +166,17 @@ lib/
 │   ├── constants/               # Spacing, durations, sizes
 │   ├── extensions/              # BuildContext, DateTime, String helpers
 │   ├── routing/                 # GoRouter config + route name constants
+│   ├── l10n/                    # Localizations (en, de, es, fr) + translations/
 │   ├── widgets/                 # Generic shared UI components
-│   └── services/                # Supabase, local DB, file import, AI, update
+│   └── services/                # Supabase, local DB, file import/export, AI, update
 ├── data/                        # Global data layer
 │   ├── models/                  # Immutable Dart data classes
-│   └── repositories/            # CRUD abstraction (one per entity)
+│   └── repositories/            # CRUD abstraction (Supabase + local/ SQLite mirrors)
 └── features/                    # Self-contained feature modules
     ├── vehicles/                 # Fleet list, dashboard, config, AI generator
     ├── inventory/                # Live inventory tracking screen
     ├── reports/                  # Report list, detail, and export
+    ├── device_comparison/        # Device list comparison & import
     └── settings/                 # App settings screen
 ```
 
@@ -183,14 +185,22 @@ lib/
 ## Extending the app
 
 - **New feature**: Create `features/<name>/` with screens, widgets, and providers. Register one route in `core/routing/app_router.dart`.
-- **New repository**: Extend `base_repository.dart` — no other files need to change.
-- **New export format**: Add alongside `_exportJson` / `_exportPdf` in `report_detail_screen.dart`.
+- **New repository**: Extend `base_repository.dart` for Supabase; add a matching counterpart under `data/repositories/local/` for SQLite. No other files need to change.
+- **New export format**: Add alongside the existing exporters in `core/services/file_export_service.dart` and surface it in `features/reports/widgets/export_buttons.dart`.
 - **Authentication**: Add `core/services/auth_service.dart` + a redirect guard in `app_router.dart`.
 - **Barcode scanning**: New `features/barcode_scanner/` module; no existing files need modification.
 
 ---
 
 ## Release notes
+
+### v1.1.6 — AI generator: subsection support
+
+- **NEW SUBSECTION mode**: each section entry in the AI generator now offers three modes — **NEW SECTION** (creates a top-level section, unchanged), **NEW SUBSECTION** (new), and **ADD TO EXISTING** (unchanged)
+- In **NEW SUBSECTION** mode a parent section dropdown appears (the full flattened section tree is shown, so any existing section or subsection is a valid parent), followed by a name field for the new subsection
+- On import the subsection is created under the chosen parent and all AI-detected devices for that entry are inserted directly into it
+- The three mode chips are rendered in a `Wrap` so they reflow correctly on narrow screens
+- No changes to the generate step — the subsection name is passed to the AI as the section label so device naming remains context-aware
 
 ### v1.1.5 — Device list comparison & import
 - **File upload**: accept documents and images (PDF, JPG, PNG) from the file picker as the source for a device list
