@@ -59,7 +59,8 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 - On startup the app silently checks the GitHub releases API for a newer APK
 - Shows a "New Version Available" dialog with release notes and a download progress bar
 - After the download completes a persistent **INSTALL** button appears — tap it to launch the native package installer
-- If Android redirects to the "Install unknown apps" permission screen, grant the permission and tap **INSTALL** again to complete the installation
+- If Android blocks installation due to a missing "Install unknown apps" permission, the dialog switches to a **Permission Required** screen with step-by-step instructions; tap **INSTALL** again after granting the permission to complete the update
+- Other installation failures show an **Install Failed** screen with the error detail and a retry button
 
 ### Settings
 - **App mode**: Administration (full CRUD) or Inventory Tracking (read-only, no edits)
@@ -193,6 +194,15 @@ lib/
 ---
 
 ## Release notes
+
+### v1.1.7 — Auto-update install error handling
+
+- **Permission error detection**: `installApk` now returns the error message from the OS instead of silently swallowing it; the dialog inspects the message and distinguishes a "permission denied / unknown source" failure from other install errors
+- **New `installError` phase**: after a failed install the dialog transitions to a dedicated error screen instead of staying on the downloaded screen
+- **Permission Required screen**: when Android blocks the install because "Install unknown apps" has not been granted, the dialog shows a `security` icon, the title "Permission Required", and a step-by-step hint — "Go to Settings → Install unknown apps → select this app → enable Allow from this source, then tap INSTALL again"
+- **Install Failed screen**: all other install errors show the raw error message so the user knows what went wrong
+- Both error screens keep an **INSTALL** button so the user can retry immediately after resolving the issue, without dismissing and reopening the dialog
+- `_cancel()` / **CLOSE** now also dismisses the dialog from the `installError` phase
 
 ### v1.1.6 — AI generator: subsection support
 
