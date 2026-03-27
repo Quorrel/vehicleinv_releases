@@ -195,6 +195,12 @@ lib/
 
 ## Release notes
 
+### v1.2.0 — Subcategory AI photo fixes & CI improvements
+
+- **Subcategory support in AI pack generator**: fixed an issue where subsections generated from AI section photos were not correctly associated with their parent sections during import
+- **AI photo processing**: resolved edge cases where device thumbnails extracted from section photos were dropped when the detected device belonged to a subsection rather than a top-level section
+- **CI**: release APK artifact is now named `vehicleinv_<tag>.apk` instead of the generic `app-release.apk`, making it easier to identify downloaded builds
+
 ### v1.1.7 — Auto-update install error handling
 
 - **Permission error detection**: `installApk` now returns the error message from the OS instead of silently swallowing it; the dialog inspects the message and distinguishes a "permission denied / unknown source" failure from other install errors
