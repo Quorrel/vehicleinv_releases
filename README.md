@@ -195,6 +195,14 @@ lib/
 
 ## Release notes
 
+### v1.2.1 — AI photo improvements, pending inventory guard & subcategory fix
+
+- **Subcategory tree fix**: multiple levels of nested subcategories now display correctly — the tree-building algorithm was rewritten to use a recursive bottom-up reconstruction so grandchild nodes are always reflected in their grandparent
+- **AI pack generator — yellow label detection**: the AI prompt now instructs the model to read the small yellow name patches / nameplates attached to mounted devices as the authoritative source for device names, rather than guessing from appearance alone
+- **AI pack generator — mounting hardware excluded**: the prompt explicitly lists mounting racks, mounting rails, brackets, and shelving frames as items to ignore; only actual equipment is returned
+- **AI pack generator — fuel items split**: when multiple identical items with `has_fuel=true` are detected (e.g. 3 SCBA cylinders), the AI now emits one entry per item (`target_quantity=1`) instead of a single entry with a higher quantity, so the fuel level of every individual item can be recorded separately
+- **Pending inventory guard**: starting a new inventory count is now blocked when an in-progress report already exists for that vehicle — a dialog explains the situation and offers a direct link to the pending report list
+
 ### v1.2.0 — Subcategory AI photo fixes & CI improvements
 
 - **Subcategory support in AI pack generator**: fixed an issue where subsections generated from AI section photos were not correctly associated with their parent sections during import
