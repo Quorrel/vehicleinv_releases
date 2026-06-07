@@ -195,6 +195,10 @@ lib/
 
 ## Release notes
 
+### v1.2.5 — Version bump
+
+- Version bump to trigger CI release build with the updated build toolchain
+
 ### v1.2.4 — Build toolchain upgrade (Flutter 3.44 compatibility)
 
 - Upgraded Gradle wrapper from 8.4.0 → 8.14.1 (Flutter 3.44 minimum: 8.7.0; 8.10.2 deprecated)
