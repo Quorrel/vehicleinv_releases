@@ -195,6 +195,30 @@ lib/
 
 ## Release notes
 
+### v1.2.4 — Build toolchain upgrade (Flutter 3.44 compatibility)
+
+- Upgraded Gradle wrapper from 8.4.0 → 8.14.1 (Flutter 3.44 minimum: 8.7.0; 8.10.2 deprecated)
+- Upgraded Android Gradle Plugin from 8.3.2 → 8.11.1 (Flutter 3.44 minimum: 8.6.0)
+- Upgraded Kotlin Gradle Plugin from 1.9.24 → 2.2.20 (Flutter 3.44 minimum: 2.2.20)
+
+### v1.2.3 — Build fix: Gradle wrapper upgrade
+
+- Bumped Gradle wrapper from 8.4.0 to 8.10.2 to satisfy Flutter's minimum required version (8.7.0)
+
+### v1.2.2 — Code quality, reliability & UX improvements
+
+- **Optimistic UI with rollback**: inventory swipe / quantity / fuel changes now update the UI instantly and persist in the background; any persistence failure silently reverts the card to its previous state and shows a localised error snackbar instead of silently losing the change
+- **Repository provider injection**: `inventory_tracking_screen` and `vehicle_config_screen` no longer hard-code `SupabaseService.client` — they now go through `reportRepositoryProvider` / `vehicleRepositoryProvider`, so Local (SQLite) mode works correctly everywhere
+- **Pending-report flow reworked**: the "already in progress" dialog now offers two actions — **VIEW PENDING** (opens the existing report) and **START FRESH** (creates a new one) — instead of blocking the user entirely
+- **Config tree no longer flashes on edit**: removed the intermediate `AsyncLoading` state in `VehicleConfigNotifier._reload()` so the section tree stays visible while a background reload runs after adding, renaming, or deleting a section or device
+- **AI extraction cancellation**: the extraction flow in `DeviceComparisonNotifier` now checks a `_cancelled` flag at every async boundary; the **Extracting** screen gained a **Cancel** button that sets the flag and resets to idle
+- **Delete device confirmation**: deleting a device from the config screen now shows the same confirmation dialog as deleting a section — the action was previously instant and irreversible without warning
+- **Removed dead cloud-upload button**: the non-functional "Upload to Cloud" option has been removed from the report detail screen and `ExportButtons` widget
+- **Migration warning banner is dismissible**: the `_MigrationWarningBanner` on the vehicle list screen now has a close (×) button so users can clear it once acknowledged
+- **Swipe-card key stability**: `DeviceSwipeCard` widgets now receive a `ValueKey('swipe_<deviceId>')` so Flutter can correctly reconcile cards after list reorders or filter changes
+- **Supabase channel teardown is logged**: errors thrown by `client.removeChannel()` in the vehicle config and vehicle list providers are now caught and printed via `debugPrint` instead of propagating silently
+- **Localisation completeness**: added `startFreshReport` and `changeSaveFailed` strings to all four translation files (en, de, es, fr); updated `pendingReportMessage` to reflect the two-option dialog copy
+
 ### v1.2.1 — AI photo improvements, pending inventory guard & subcategory fix
 
 - **Subcategory tree fix**: multiple levels of nested subcategories now display correctly — the tree-building algorithm was rewritten to use a recursive bottom-up reconstruction so grandchild nodes are always reflected in their grandparent
