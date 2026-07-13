@@ -1,6 +1,6 @@
 # Vehicle Inventory Management App
 
-**Current version:** **1.3.3+25**
+**Current version:** **1.3.4+26**
 
 [![CI](https://github.com/Quorrel/vehicleinv/actions/workflows/flutter-ci.yml/badge.svg)](https://github.com/Quorrel/vehicleinv/actions/workflows/flutter-ci.yml)
 
@@ -224,6 +224,14 @@ All widgets (buttons, cards, badges, progress bars, etc.) should reference these
 ---
 
 ## Release notes
+
+### v1.3.4 — Fix "type 'Null' is not a subtype of type 'String'" crash reviewing vehicle configuration
+
+`Section`/`Device`/`InventoryReport`/`InventoryEntry` fields such as `vehicleId`, `sectionId`, and `targetQuantity` had no `@JsonKey` mapping, so their generated `fromJson` looked for camelCase keys. Both the local SQLite DB and Supabase actually use snake_case columns (`vehicle_id`, `section_id`, `target_quantity`, …), so those keys were always missing from the row map and the non-nullable `as String` casts threw at runtime whenever a vehicle's configuration was opened.
+
+- Added the missing `@JsonKey(name: 'snake_case_column')` annotations to `Section`, `Device`, and `InventoryEntry` (`is_present`, `current_quantity`, `fuel_level` were also silently always-null/zero before this fix, though non-crashing)
+- Regenerated `.freezed.dart` / `.g.dart` for all five `freezed` models via `build_runner`
+- Added the `abstract` keyword to all five `freezed` model classes (`Vehicle`, `Section`, `Device`, `InventoryReport`, `InventoryEntry`) — required by the currently-pinned `freezed: ^3.2.5` codegen, but masked until now by a stale `.dart_tool` build cache holding onto older-style generated output
 
 ### v1.3.3 — Version bump
 
