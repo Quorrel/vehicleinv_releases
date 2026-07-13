@@ -1,5 +1,9 @@
 # Vehicle Inventory Management App
 
+**Current version:** **1.3.2+24**
+
+[![CI](https://github.com/Quorrel/vehicleinv/actions/workflows/flutter-ci.yml/badge.svg)](https://github.com/Quorrel/vehicleinv/actions/workflows/flutter-ci.yml)
+
 Cross-platform Flutter app (Android / iOS / Windows) for field technicians to track equipment inside vehicles. Built with Supabase or a local SQLite database, Riverpod state management, and GoRouter navigation.
 
 ---
@@ -65,10 +69,10 @@ Cross-platform Flutter app (Android / iOS / Windows) for field technicians to tr
 ### Settings
 - **App mode**: Administration (full CRUD) or Inventory Tracking (read-only, no edits)
 - **Database backend**: Local SQLite (offline, no account needed) or Supabase (cloud sync)
-- **Supabase credentials**: Saved to device, swapped at runtime without restarting
+- **Supabase credentials**: Stored in encrypted platform storage (`flutter_secure_storage`), swapped at runtime without restarting
 - **Language**: English, French, German, Spanish, or system default
 - **Appearance**: Custom background image (dimmed behind the UI)
-- **AI service**: None, or OpenRouter with a configurable model
+- **AI service**: None, or OpenRouter with a configurable model (API key stored in encrypted platform storage)
 
 ---
 
@@ -171,7 +175,7 @@ lib/
 │   ├── widgets/                 # Generic shared UI components
 │   └── services/                # Supabase, local DB, file import/export, AI, update
 ├── data/                        # Global data layer
-│   ├── models/                  # Immutable Dart data classes
+│   ├── models/                  # Immutable Dart data classes (freezed + json_serializable)
 │   └── repositories/            # CRUD abstraction (Supabase + local/ SQLite mirrors)
 └── features/                    # Self-contained feature modules
     ├── vehicles/                 # Fleet list, dashboard, config, AI generator
@@ -180,6 +184,32 @@ lib/
     ├── device_comparison/        # Device list comparison & import
     └── settings/                 # App settings screen
 ```
+
+Two services centralize cross-cutting concerns:
+- **`core/services/config_manager.dart`** — single API for all persisted settings. Sensitive values (Supabase URL/anon key, OpenRouter API key) are kept in encrypted platform storage (`flutter_secure_storage`) with automatic one-time migration from the legacy `SharedPreferences` keys; non-sensitive values (app mode, DB provider, AI service) stay in `SharedPreferences`.
+- **`core/services/database_provider_factory.dart`** — single place that maps a `DbProvider` (Supabase or local) to the correct repository implementation, used by feature providers instead of branching on the provider inline.
+
+## Theme Tokens
+
+The UI uses a centralized set of color tokens defined in `core/theme/app_colors.dart`. These tokens ensure consistent styling across all widgets.
+
+| Token | Description |
+|-------|-------------|
+| `AppColors.scaffold` | Scaffold background |
+| `AppColors.surfaceDark` | Dark surface (e.g., AppBar) |
+| `AppColors.surfaceMid` | Mid surface (cards, dialogs) |
+| `AppColors.surfaceLight` | Light surface (snackbars) |
+| `AppColors.border` | Border color |
+| `AppColors.primary` | Accent (amber) |
+| `AppColors.success` | Success (green) |
+| `AppColors.error` | Error (red) |
+| `AppColors.info` | Informational (blue) |
+| `AppColors.warning` | Warning (amber, same as primary) |
+| `AppColors.textPrimary` | Primary text |
+| `AppColors.textSecondary` | Secondary text |
+| `AppColors.textMuted` | Muted text |
+
+All widgets (buttons, cards, badges, progress bars, etc.) should reference these tokens instead of hard‑coded `Color(0x…)` values.
 
 ---
 
@@ -194,6 +224,38 @@ lib/
 ---
 
 ## Release notes
+
+### v1.3.2 — Fix release build broken by unmigrated Riverpod 3 / file_picker 12 bump
+
+The v1.3.0 architecture refactor bumped `flutter_riverpod` (`^2.4.9` → `^3.3.2`) and `file_picker` (`^8.0.0` → `^12.0.0-beta.7`) without migrating the code off the APIs those majors removed, so every release build (`flutter build apk --release`, including the tagged release workflow) failed at the Dart-compile step. `flutter analyze` now reports 0 errors and all tests pass.
+
+- **Riverpod 3 legacy APIs**: added `import 'package:flutter_riverpod/legacy.dart'` wherever `StateProvider`, `StateNotifier`, `StateNotifierProvider`, or `ChangeNotifierProvider` are used (Riverpod 3 moved these out of the default import) — no behavior change, same classes as before
+- **`VehicleConfigNotifier`**: migrated off the removed `FamilyAsyncNotifier<State, Arg>` to Riverpod 3's `AsyncNotifier<State>` pattern, where the family argument is now injected via the notifier's constructor instead of a `build(arg)` parameter
+- **`AsyncValue.valueOrNull` → `.value`**: Riverpod 3 renamed the nullable value getter; updated ~24 call sites across the inventory, vehicle, reports, and device-comparison providers/screens
+- **`file_picker` static API**: 11.0.0 made `FilePicker` methods static (no more `FilePicker.platform` singleton); updated all 8 call sites, and added `allowMultiple: false` to single-file pickers since the library's default flipped to `true`
+- **`entry.copyWith(clearIsPresent: true, ...)`**: the freezed-model migration in v1.3.0 dropped the hand-written `clearIsPresent` copyWith parameter; fixed by using freezed's built-in explicit-null support (`copyWith(isPresent: null, ...)`)
+- **`AppColors.success.withOpacity(0.125)` in a `const` context**: no longer a compile-time constant on current Flutter; dropped the local `const` and switched to `withValues(alpha:)`
+- **`settings_screen.dart`**: re-added imports for `AppMode`/`AiService`/`DbProvider` (the enum types, still referenced directly) and `OpenRouterConfigService.defaultModel`, dropped in the v1.3.0 `ConfigManager` migration without checking remaining direct references
+- **`inventory_tracking_screen.dart`**: fixed two leftover `provider.notifier` reads that were missed when `inventoryEntriesProvider`/`reportStatusProvider` were converted to family providers in v1.3.0, and would have thrown at runtime even before the Riverpod 3 bump
+
+### v1.3.1 — Documentation fixes
+
+- Fixed a broken Markdown code fence in this README that had swallowed the entire "Theme Tokens" section into the "Architecture" code block
+- Documented `ConfigManager` (secure credential storage) and `DatabaseProviderFactory` (unified repository selection) in the Architecture section
+- Updated the Settings section to reflect that Supabase and OpenRouter credentials are now stored via `flutter_secure_storage` instead of plain `SharedPreferences`
+- Added the missing v1.3.0 release notes entry
+
+### v1.3.0 — Secure config, unified DB provider factory, freezed models
+
+- **Secure credential storage**: `core/services/config_manager.dart` is now the single entry point for all persisted settings. Supabase URL/anon key and the OpenRouter API key are stored via `flutter_secure_storage` (encrypted platform storage) instead of plain `SharedPreferences`, with automatic one-time migration of any previously saved plaintext values
+- **Unified database provider selection**: `core/services/database_provider_factory.dart` centralizes the Supabase-vs-local repository selection that was previously duplicated across feature providers
+- **Immutable models via `freezed`**: `Vehicle`, `Section`, `Device`, `InventoryReport`, and `InventoryEntry` are now generated with `freezed` + `json_serializable` (`.freezed.dart` / `.g.dart`), replacing hand-written `copyWith`/equality/serialization code
+- **Background image encoding**: AI pack generation and device extraction now base64-encode photos on a background isolate (`compute`) instead of the UI thread, avoiding jank on large images
+- **Localization CI**: new `.github/workflows/check_translations.yml` runs `tool/check_missing_translations.dart` on every push/PR to `main`, failing the build if a translation key is missing from any of the four locale files
+- **Theme token cleanup**: widgets consistently reference `AppColors` tokens instead of hard-coded `Color(0x…)` values (see [Theme Tokens](#theme-tokens))
+- Added `ARCHITECTURE.md` and `CONTRIBUTING.md`
+- Added `flutter-ci.yml` (analyze + test + coverage) and a CI status badge to this README
+- Expanded test coverage for config storage, the database provider factory, and repository selection
 
 ### v1.2.5 — Version bump
 
