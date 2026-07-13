@@ -1,6 +1,6 @@
 # Vehicle Inventory Management App
 
-**Current version:** **1.3.2+24**
+**Current version:** **1.3.3+25**
 
 [![CI](https://github.com/Quorrel/vehicleinv/actions/workflows/flutter-ci.yml/badge.svg)](https://github.com/Quorrel/vehicleinv/actions/workflows/flutter-ci.yml)
 
@@ -224,6 +224,10 @@ All widgets (buttons, cards, badges, progress bars, etc.) should reference these
 ---
 
 ## Release notes
+
+### v1.3.3 — Version bump
+
+- Version bump to trigger a fresh tagged release build via `release.yml`; no code changes since v1.3.2
 
 ### v1.3.2 — Fix release build broken by unmigrated Riverpod 3 / file_picker 12 bump
 
