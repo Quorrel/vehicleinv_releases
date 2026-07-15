@@ -2,8 +2,6 @@
 
 **Current version:** **1.3.4+26**
 
-[![CI](https://github.com/Quorrel/vehicleinv/actions/workflows/flutter-ci.yml/badge.svg)](https://github.com/Quorrel/vehicleinv/actions/workflows/flutter-ci.yml)
-
 Cross-platform Flutter app (Android / iOS / Windows) for field technicians to track equipment inside vehicles. Built with Supabase or a local SQLite database, Riverpod state management, and GoRouter navigation.
 
 ---
